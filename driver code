@@ -1,0 +1,34 @@
+import cv2
+import numpy as np
+import requests
+from io import BytesIO
+from PIL import Image
+from google.colab.patches import cv2_imshow
+
+# URL of the floor plan image (example, can add link as per use)
+url = 'https://static.vecteezy.com/system/resources/previews/002/172/768/large_2x/top-view-apartment-interior-detailed-plan-free-vector.jpg'
+
+# Sourcing
+response = requests.get(url)
+img_array = np.asarray(bytearray(response.content), dtype=np.uint8)
+floor_plan_image = cv2.imdecode(img_array, cv2.IMREAD_COLOR)
+
+# Floor Plan -> grayscale
+gray = cv2.cvtColor(floor_plan_image, cv2.COLOR_BGR2GRAY)
+
+# edge detection (Canny edge detector)
+edges = cv2.Canny(gray, 50, 150)
+
+# Find contours in the edge-detected image
+contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+# Create a new image for the transformed floor plan
+height, width, _ = floor_plan_image.shape
+transformed_floor_plan = np.ones((height, width, 3), dtype=np.uint8) * 255
+
+# Iterate through the contours and draw them on the transformed floor plan
+for contour in contours:
+    cv2.drawContours(transformed_floor_plan, [contour], -1, (0, 0, 0), 1)
+
+# Display
+cv2_imshow(transformed_floor_plan)
